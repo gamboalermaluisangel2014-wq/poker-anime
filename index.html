@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Anime Texas</title>
+<style>
+  body {background:#0b3;color:#fff;text-align:center;font-family:sans-serif;}
+  .mesa {display:flex;flex-wrap:wrap;justify-content:center;margin-top:10px;}
+  .jugador,.bot{background:#063;padding:10px;margin:5px;border-radius:10px;width:180px;}
+  .cartas{font-size:24px;margin:5px 0;}
+  .community{font-size:32px;margin:10px 0;}
+</style>
+</head>
+<body>
+<h1>🎴 Poker Anime Texas 🎴</h1>
+<button onclick="nuevaRonda()">Nueva Ronda</button>
+<button onclick="siguienteCarta()">Siguiente Carta</button>
+<div id="community" class="community"></div>
+<div id="mesa" class="mesa"></div>
+<div id="resultado"></div>
+
+<script>
+const palos=['♠','♥','♦','♣'];
+const valores=['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+const valorNumerico={'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'10':10,'J':11,'Q':12,'K':13,'A':14};
+const avatares=[
+  'https://i.ibb.co/G5nG7nm/anime1.jpg',
+  'https://i.ibb.co/1QLBkZw/anime2.jpg',
+  'https://i.ibb.co/n7f47Y2/anime3.jpg',
+  'https://i.ibb.co/vHHPR4k/anime4.jpg'
+];
+let jugadores=[
+  {nombre:'Tú',mano:[]},
+  {nombre:'Bot 1',mano:[]},
+  {nombre:'Bot 2',mano:[]},
+  {nombre:'Bot 3',mano:[]}
+];
+let mazo=[];
+let communityCards=[];
+let etapa=0;
+
+function baraja(){
+  const m=[];
+  for(let p of palos)for(let v of valores)m.push(v+p);
+  return m.sort(()=>Math.random()-0.5);
+}
+
+function nuevaRonda(){
+  mazo=baraja();
+  communityCards=[];
+  etapa=0;
+  jugadores.forEach(j=>j.mano=[mazo.pop(),mazo.pop()]);
+  render();
+}
+
+function siguienteCarta(){
+  if(etapa===0){ //flop
+    communityCards=[mazo.pop(),mazo.pop(),mazo.pop()];
+    etapa=1;
+  }else if(etapa===1){ //turn
+    communityCards.push(mazo.pop());
+    etapa=2;
+  }else if(etapa===2){ //river
+    communityCards.push(mazo.pop());
+    etapa=3;
+    determinarGanador();
+  }
+  render();
+}
+
+function render(){
+  document.getElementById('community').innerHTML='Cartas comunitarias: '+communityCards.join(' ');
+  const mesa=document.getElementById('mesa');
+  mesa.innerHTML='';
+  jugadores.forEach((j,i)=>{
+    const div=document.createElement('div');
+    div.className=i===0?'jugador':'bot';
+    div.innerHTML=`<img src="${avatares[i]}" width="60" style="border-radius:50%"><br>
+    <b>${j.nombre}</b>
+    <div class="cartas">${j.mano.join(' ')}</div>`;
+    mesa.appendChild(div);
+  });
+}
+
+function determinarGanador(){
+  // Simplificación: mayor carta combinada con comunitarias
+  let mejor=jugadores[0];
+  let mejorValor=maxValor(jugadores[0]);
+  for(let j of jugadores.slice(1)){
+    let v=maxValor(j);
+    if(v>mejorValor){mejor=j;mejorValor=v;}
+  }
+  document.getElementById('resultado').innerText='Ganador: '+mejor.nombre;
+}
+
+function maxValor(j){
+  // mayor carta entre su mano+comunitarias
+  const todas=j.mano.concat(communityCards);
+  return Math.max(...todas.map(c=>valorNumerico[c.replace(/[^0-9JQKA]/g,'')]));
+}
+</script>
+</body>
+</html>
